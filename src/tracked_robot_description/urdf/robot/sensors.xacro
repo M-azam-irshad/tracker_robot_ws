@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<!-- Sensor frames + Gazebo (gz-sim 8 / Harmonic) sensor definitions.
+     Topic names here must match tracked_robot_gazebo/config/bridge.yaml -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- =============== IMU (chassis centre) =============== -->
+  <link name="imu_link">
+    <visual>
+      <geometry><box size="0.02 0.02 0.005"/></geometry>
+      <material name="pcb_green"/>
+    </visual>
+    <xacro:small_inertial m="0.02"/>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.0"/>
+  </joint>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <visualize>false</visualize>
+      <imu>
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.0003</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.0003</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.0003</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.01</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.01</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.01</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <!-- =============== RPLIDAR (2D, 360 deg) =============== -->
+  <link name="lidar_link">
+    <visual>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+      <material name="sensor_black"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.025"/>
+      <geometry><cylinder radius="0.022" length="0.012"/></geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.19"/>
+      <xacro:z_cylinder_inertia m="0.19" r="0.035" h="0.04"/>
+    </inertial>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="lidar_mount_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 ${lidar_mast_h + 0.02}"/>
+  </joint>
+
+  <gazebo reference="lidar_link">
+    <sensor name="rplidar" type="gpu_lidar">
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <topic>scan</topic>
+      <gz_frame_id>lidar_link</gz_frame_id>
+      <visualize>false</visualize>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.15</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <!-- =============== Kinect-style RGB-D camera (x forward) =============== -->
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.04 0.26 0.04"/></geometry>
+      <material name="sensor_black"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.04 0.26 0.04"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.43"/>
+      <xacro:box_inertia m="0.43" x="0.04" y="0.26" z="0.04"/>
+    </inertial>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="kinect_mount_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0 0 ${kinect_post_h + 0.02}"/>
+  </joint>
+
+  <gazebo reference="camera_link">
+    <sensor name="kinect_rgbd" type="rgbd_camera">
+      <always_on>true</always_on>
+      <update_rate>15</update_rate>
+      <topic>camera</topic>
+      <gz_frame_id>camera_link</gz_frame_id>
+      <visualize>false</visualize>
+      <camera>
+        <horizontal_fov>1.0</horizontal_fov>  <!-- Kinect v1 ~57 deg -->
+        <image>
+          <width>320</width>                   <!-- raise to 640x480 if your GPU copes -->
+          <height>240</height>
+        </image>
+        <clip>
+          <near>0.4</near>
+          <far>4.5</far>
+        </clip>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <!-- =============== Gas-sensor frame (values come from gas_simulator.py) =============== -->
+  <link name="gas_sensor_link">
+    <visual>
+      <geometry><box size="0.05 0.04 0.02"/></geometry>
+      <material name="pcb_green"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.02"/>
+      <geometry><cylinder radius="0.008" length="0.02"/></geometry>
+      <material name="steel"/>
+    </visual>
+    <xacro:small_inertial m="0.05"/>
+  </link>
+  <joint name="gas_sensor_joint" type="fixed">
+    <parent link="gas_mount_link"/>
+    <child link="gas_sensor_link"/>
+    <origin xyz="0 0 ${gas_mast_h + 0.01}"/>
+  </joint>
+
+  <!-- =============== Microphone array frame (victim sound localisation) =============== -->
+  <link name="microphone_link">
+    <visual>
+      <geometry><cylinder radius="0.03" length="0.01"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <xacro:small_inertial m="0.03"/>
+  </link>
+  <joint name="microphone_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="microphone_link"/>
+    <origin xyz="${mic_x} 0 ${chassis_top_z + 0.013}"/>
+  </joint>
+
+</robot>

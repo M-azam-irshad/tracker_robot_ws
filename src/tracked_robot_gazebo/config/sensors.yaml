@@ -1,0 +1,25 @@
+# Parameters for the simulated gas sensors (scripts/gas_simulator.py).
+# Plume centres MUST match GAS_SOURCES in scripts/generate_worlds.py (search_and_rescue_world).
+# NOTE: write every float with a decimal point (ROS 2 is strict about double arrays).
+gas_simulator:
+  ros__parameters:
+    use_sim_time: true
+    robot_name: tracked_robot
+    publish_rate: 10.0
+    response_time_const: 3.0     # s, MQ-sensor lag
+    noise_fraction: 0.03
+    sensor_offset_x: -0.18       # gas sensor position in base_link (matches robot_properties gas_x)
+    sensor_offset_y: 0.0
+
+    gases: ["co", "ch4", "h2s"]
+    baseline_ppm: [0.0, 2.0, 0.0]
+    # Hazard classification thresholds (ppm). PLACEHOLDERS - confirm with your supervisors/standards:
+    #   CO ~ OSHA PEL 50 / NIOSH REL 35;  CH4 caution = 10% LEL, hazard = 50% LEL;  H2S ~ 10 / 50
+    caution_ppm: [35.0, 5000.0, 10.0]
+    hazard_ppm: [200.0, 25000.0, 50.0]
+
+    plume_gas: ["co", "ch4", "h2s"]
+    plume_x: [7.0, 9.0, 14.0]
+    plume_y: [0.5, 5.5, -0.8]
+    plume_peak_ppm: [400.0, 40000.0, 80.0]
+    plume_sigma: [2.0, 1.8, 1.5]

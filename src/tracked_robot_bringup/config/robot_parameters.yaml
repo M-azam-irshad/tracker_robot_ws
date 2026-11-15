@@ -1,0 +1,10 @@
+# Defaults read by simulation_bringup.launch.py (command-line args override them)
+simulation:
+  world: search_and_rescue_world     # empty | test_environment | search_and_rescue_world
+  headless: false
+  rviz: true
+  spawn:
+    x: 0.0
+    y: 0.0
+    z: 0.05
+    yaw: 0.0

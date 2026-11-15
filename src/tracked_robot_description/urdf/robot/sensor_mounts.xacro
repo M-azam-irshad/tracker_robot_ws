@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!-- Mechanical mounts (masts / brackets). Real modular bays + sensor mounts are being
+     designed by Abdullah Sajid / Nasir Kabir; update these when the CAD is final. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- RPLIDAR mast (top, near centre, highest point so the scan plane is unobstructed) -->
+  <link name="lidar_mount_link">
+    <visual>
+      <origin xyz="0 0 ${lidar_mast_h/2}"/>
+      <geometry><cylinder radius="0.012" length="${lidar_mast_h}"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${lidar_mast_h/2}"/>
+      <geometry><cylinder radius="0.012" length="${lidar_mast_h}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${lidar_mast_h/2}"/>
+      <mass value="0.1"/>
+      <xacro:z_cylinder_inertia m="0.1" r="0.012" h="${lidar_mast_h}"/>
+    </inertial>
+  </link>
+  <joint name="lidar_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_mount_link"/>
+    <origin xyz="${lidar_x} 0 ${chassis_top_z}"/>
+  </joint>
+
+  <!-- Kinect bracket (front, low post) -->
+  <link name="kinect_mount_link">
+    <visual>
+      <origin xyz="0 0 ${kinect_post_h/2}"/>
+      <geometry><box size="0.04 0.04 ${kinect_post_h}"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${kinect_post_h/2}"/>
+      <geometry><box size="0.04 0.04 ${kinect_post_h}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${kinect_post_h/2}"/>
+      <mass value="0.1"/>
+      <xacro:box_inertia m="0.1" x="0.04" y="0.04" z="${kinect_post_h}"/>
+    </inertial>
+  </link>
+  <joint name="kinect_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="kinect_mount_link"/>
+    <origin xyz="${kinect_x} 0 ${chassis_top_z}"/>
+  </joint>
+
+  <!-- Gas-sensor mast (rear, away from the lidar plane) -->
+  <link name="gas_mount_link">
+    <visual>
+      <origin xyz="0 0 ${gas_mast_h/2}"/>
+      <geometry><cylinder radius="0.01" length="${gas_mast_h}"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${gas_mast_h/2}"/>
+      <geometry><cylinder radius="0.01" length="${gas_mast_h}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${gas_mast_h/2}"/>
+      <mass value="0.08"/>
+      <xacro:z_cylinder_inertia m="0.08" r="0.01" h="${gas_mast_h}"/>
+    </inertial>
+  </link>
+  <joint name="gas_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gas_mount_link"/>
+    <origin xyz="${gas_x} 0 ${chassis_top_z}"/>
+  </joint>
+
+</robot>

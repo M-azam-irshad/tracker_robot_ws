@@ -1,0 +1,11 @@
+# Reference values used when generating the worlds (see scripts/generate_worlds.py -> world()).
+# Edit the generator (or the <physics> block in the .sdf) to change them - this file is documentation.
+physics:
+  engine: dartsim              # gz-sim default
+  max_step_size: 0.003         # s
+  real_time_factor: 1.0
+  gravity: [0.0, 0.0, -9.81]
+contact:
+  ground_mu: 1.0
+  wheel_mu_longitudinal: 0.9   # robot_properties.xacro: mu_longitudinal
+  wheel_mu_lateral: 0.5        # robot_properties.xacro: mu_lateral  (lower = easier skid-steer turning)

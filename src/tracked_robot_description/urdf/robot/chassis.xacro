@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Ground-projected frame (REP-105 base_footprint) -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${base_link_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Main chassis box (NCRA platform) -->
+  <link name="base_link">
+    <visual>
+      <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+      <material name="camo_green"/>
+    </visual>
+    <!-- removable top plate / lid -->
+    <visual>
+      <origin xyz="0 0 ${chassis_height/2 + 0.004}"/>
+      <geometry><box size="${chassis_length*0.96} ${chassis_width*0.96} 0.008"/></geometry>
+      <material name="alu"/>
+    </visual>
+    <!-- front bumper -->
+    <visual>
+      <origin xyz="${chassis_length/2 + 0.01} 0 -0.02"/>
+      <geometry><box size="0.02 ${chassis_width} 0.06"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${chassis_com_z}"/>
+      <mass value="${chassis_mass}"/>
+      <xacro:box_inertia m="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}"/>
+    </inertial>
+  </link>
+
+</robot>

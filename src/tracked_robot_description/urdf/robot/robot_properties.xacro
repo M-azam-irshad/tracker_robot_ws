@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!-- Single source of truth for every dimension / mass.
+     !! ESTIMATED from the NCRA chassis photo - replace with measured / CAD values. !! -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===== Chassis (open aluminium box with motors inside) ===== -->
+  <xacro:property name="chassis_length"   value="0.50"/>
+  <xacro:property name="chassis_width"    value="0.32"/>
+  <xacro:property name="chassis_height"   value="0.14"/>
+  <xacro:property name="chassis_mass"     value="18.0"/>   <!-- kg, incl. motors, battery, electronics -->
+  <xacro:property name="chassis_com_z"    value="-0.02"/>  <!-- CoG slightly below geometric centre -->
+  <xacro:property name="ground_clearance" value="0.04"/>   <!-- chassis belly to ground -->
+
+  <!-- ===== Tracks (modelled as powered wheels + visual belt) ===== -->
+  <xacro:property name="wheel_radius"     value="0.07"/>   <!-- = outer radius of track at the ground -->
+  <xacro:property name="wheel_width"      value="0.06"/>   <!-- collision width = belt width -->
+  <xacro:property name="flange_width"     value="0.07"/>   <!-- visual rim, slightly wider than belt -->
+  <xacro:property name="wheel_mass"       value="0.6"/>
+  <xacro:property name="belt_thickness"   value="0.015"/>
+  <xacro:property name="track_y_offset"   value="0.21"/>   <!-- track centre-line to robot centre-line -->
+  <xacro:property name="wheel_x_end"      value="0.25"/>   <!-- sprocket / idler axle x -->
+  <xacro:property name="wheel_x_road"     value="0.0833"/> <!-- inner road-wheel axle x -->
+
+  <!-- ===== Wheel / track-ground contact (skid-steer tuning knobs) ===== -->
+  <xacro:property name="mu_longitudinal"  value="0.9"/>
+  <xacro:property name="mu_lateral"       value="0.5"/>
+  <xacro:property name="wheel_damping"    value="0.05"/>
+
+  <!-- ===== Derived ===== -->
+  <xacro:property name="base_link_z"   value="${chassis_height/2 + ground_clearance}"/>   <!-- footprint -> base_link -->
+  <xacro:property name="wheel_z"       value="${-(chassis_height/2 + ground_clearance) + wheel_radius}"/> <!-- in base_link -->
+  <xacro:property name="chassis_top_z" value="${chassis_height/2}"/>                      <!-- in base_link -->
+
+  <!-- ===== Sensor placement (base_link frame) ===== -->
+  <xacro:property name="lidar_x"       value="0.05"/>
+  <xacro:property name="lidar_mast_h"  value="0.20"/>
+  <xacro:property name="kinect_x"      value="0.20"/>
+  <xacro:property name="kinect_post_h" value="0.06"/>
+  <xacro:property name="gas_x"         value="-0.18"/>
+  <xacro:property name="gas_mast_h"    value="0.12"/>
+  <xacro:property name="mic_x"         value="-0.08"/>
+
+</robot>

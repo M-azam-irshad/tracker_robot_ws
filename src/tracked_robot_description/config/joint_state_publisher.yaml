@@ -1,0 +1,4 @@
+# Used only by display.launch.py (RViz-only viewing, no Gazebo).
+joint_state_publisher_gui:
+  ros__parameters:
+    rate: 30

@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- One powered track wheel. Positive rotation about +Y drives the robot FORWARD (+X).
+       The wheel owns the collision geometry; the track belt is a separate visual-only link. -->
+  <xacro:macro name="track_wheel" params="prefix name x y">
+    <link name="${prefix}_${name}_wheel">
+      <visual>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius - 0.012}" length="${flange_width}"/></geometry>
+        <material name="steel"/>
+      </visual>
+      <!-- spoke bar so wheel rotation is visible in Gazebo/RViz -->
+      <visual>
+        <geometry><box size="${(wheel_radius - 0.014)*1.7} ${flange_width + 0.004} 0.012"/></geometry>
+        <material name="safety_yellow"/>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <xacro:y_cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_${name}_wheel"/>
+      <origin xyz="${x} ${y} ${wheel_z}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="${wheel_damping}" friction="0.0"/>
+    </joint>
+
+    <!-- skid-steer friction: high grip rolling, reduced sideways grip -->
+    <gazebo reference="${prefix}_${name}_wheel">
+      <mu1>${mu_longitudinal}</mu1>
+      <mu2>${mu_lateral}</mu2>
+      <fdir1>1 0 0</fdir1>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Visual-only track belt wrapped around the wheels (fixed to the chassis) -->
+  <xacro:macro name="track_belt" params="prefix y">
+    <link name="${prefix}_track_belt">
+      <visual> <!-- upper run -->
+        <origin xyz="0 0 ${wheel_radius - belt_thickness/2}"/>
+        <geometry><box size="${2*wheel_x_end} ${wheel_width} ${belt_thickness}"/></geometry>
+        <material name="rubber"/>
+      </visual>
+      <visual> <!-- lower run -->
+        <origin xyz="0 0 ${-wheel_radius + belt_thickness/2}"/>
+        <geometry><box size="${2*wheel_x_end} ${wheel_width} ${belt_thickness}"/></geometry>
+        <material name="rubber"/>
+      </visual>
+      <visual> <!-- front curve -->
+        <origin xyz="${wheel_x_end} 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="rubber"/>
+      </visual>
+      <visual> <!-- rear curve -->
+        <origin xyz="${-wheel_x_end} 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="rubber"/>
+      </visual>
+    </link>
+    <joint name="${prefix}_track_belt_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${prefix}_track_belt"/>
+      <origin xyz="0 ${y} ${wheel_z}"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- A complete track: belt + sprocket + 2 road wheels + idler -->
+  <xacro:macro name="track_side" params="prefix y">
+    <xacro:track_belt prefix="${prefix}" y="${y}"/>
+    <xacro:track_wheel prefix="${prefix}" name="sprocket" x="${wheel_x_end}"  y="${y}"/>
+    <xacro:track_wheel prefix="${prefix}" name="road_1"   x="${wheel_x_road}" y="${y}"/>
+    <xacro:track_wheel prefix="${prefix}" name="road_2"   x="${-wheel_x_road}" y="${y}"/>
+    <xacro:track_wheel prefix="${prefix}" name="idler"    x="${-wheel_x_end}" y="${y}"/>
+  </xacro:macro>
+
+</robot>

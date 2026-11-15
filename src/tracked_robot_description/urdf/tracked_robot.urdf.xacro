@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- Traversability-Aware SAR Tracked Rover : main entry point.
+     xacro tracked_robot.urdf.xacro use_sim:=true   -> includes ros2_control + gz_ros2_control
+     xacro tracked_robot.urdf.xacro use_sim:=false  -> pure description (RViz / real robot) -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tracked_robot">
+
+  <xacro:arg name="use_sim" default="true"/>
+
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/robot_properties.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/materials.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/inertials.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/track_components.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/chassis.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/left_track.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/right_track.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/sensor_mounts.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/sensors.xacro"/>
+
+  <xacro:if value="$(arg use_sim)">
+    <xacro:include filename="$(find tracked_robot_description)/urdf/ros2_control/ros2_control.xacro"/>
+  </xacro:if>
+
+</robot>
