@@ -49,8 +49,10 @@ Gas: `ros2 topic echo /gas/hazard_zone`, `/gas/co_ppm`, `/gas/ch4_ppm`, `/gas/h2
 
 See `docs/` for architecture, TF frames and the topic map.
 
-## 5. IMPORTANT - what is estimated
-Chassis/track dimensions, masses and sensor positions are **estimates** (from the NCRA photo). Replace
-them in `tracked_robot_description/urdf/robot/robot_properties.xacro` with measured/CAD values.
+## 5. IMPORTANT - what is measured vs estimated
+Track/chassis geometry = your measurement table + STEP files. ESTIMATES: chassis box height (16 cm), mass split
+(25 kg total given), motor torque (10 N*m per side at the sprocket, assumed). All tagged [T]/[S]/[E] in
+`tracked_robot_description/urdf/robot/robot_properties.xacro`.
 Tune `wheel_separation_multiplier` (diff_drive_controller.yaml) and `mu_lateral` for realistic turning.
+Rocks in the worlds are <= 8 cm (this rover's roller radius is 8.45 cm).
 Gas thresholds in `config/sensors.yaml` are placeholders to confirm with supervisors.

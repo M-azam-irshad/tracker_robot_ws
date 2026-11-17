@@ -116,13 +116,14 @@ def world(contents, ambient='0.6 0.6 0.6 1', background='0.5 0.6 0.7 1'):
 '''
 
 
-def rubble(rng, prefix, x0, x1, y0, y1, n, smin=0.06, smax=0.22):
+def rubble(rng, prefix, x0, x1, y0, y1, n, smin=0.04, smax=0.09):
+    """Rocks sized for THIS rover: roller radius 8.45 cm -> protrusion kept <= ~8 cm."""
     out = []
     for i in range(n):
         sx, sy, sz = (rng.uniform(smin, smax) for _ in range(3))
         x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
-        r, p, yw = rng.uniform(-0.45, 0.45), rng.uniform(-0.45, 0.45), rng.uniform(0, math.pi)
-        z = rng.uniform(0.25, 0.5) * sz
+        r, p, yw = rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3), rng.uniform(0, math.pi)
+        z = rng.uniform(0.25, 0.4) * sz
         shade = rng.uniform(0.25, 0.5)
         out.append(box(f'{prefix}_{i}', x, y, z, sx, sy, sz, r, p, yw, (shade, shade * 0.95, shade * 0.9)))
     return out
@@ -143,10 +144,10 @@ def make_test_env():
     top = L * math.sin(th)
     c.append(box('plateau', 2.0 + L * math.cos(th) + 0.75, 0, top / 2 - 0.02, 1.5, 1.2, top,
                  color=(0.5, 0.45, 0.38)))
-    # stairs (5 x 8 cm risers) on the -Y side
+    # stairs (5 x 6 cm risers) on the -Y side
     for i in range(5):
-        c.append(box(f'stair_{i}', 2.0 + i * 0.25 + 0.125, -3.0, 0.04 * (i + 1) * 2 / 2,
-                     0.25, 1.2, 0.08 * (i + 1), color=(0.6, 0.6, 0.62)))
+        c.append(box(f'stair_{i}', 2.0 + i * 0.25 + 0.125, -3.0, 0.03 * (i + 1),
+                     0.25, 1.2, 0.06 * (i + 1), color=(0.6, 0.6, 0.62)))
     # speed bumps (cylinders lying along Y)
     for i in range(4):
         c.append(cyl(f'bump_{i}', 2.5 + i * 0.8, 3.0, 0.0, 0.05, 1.6, r=math.pi / 2,
@@ -192,14 +193,14 @@ def make_sar():
     c.append(box('branch_e', bx + bw + T / 2, hw + bl / 2, H / 2, T, bl, H, color=wall_c))
     c.append(box('branch_end', bx, y_end + T / 2, H / 2, 2 * bw + 2 * T, T, H, color=wall_c))
     # fallen ceiling slabs (tilted, partially blocking)
-    c.append(box('slab_1', 4.2, -0.9, 0.22, 1.2, 0.9, 0.12, 0, -0.30, 0.3, (0.4, 0.4, 0.4)))
-    c.append(box('slab_2', 11.5, 0.8, 0.20, 1.0, 1.0, 0.10, 0.25, 0, -0.5, (0.4, 0.4, 0.4)))
-    c.append(box('slab_3', 9.0, 3.8, 0.18, 1.1, 0.9, 0.10, 0, 0.28, 1.0, (0.4, 0.4, 0.4)))
+    c.append(box('slab_1', 4.2, -0.9, 0.03, 0.9, 0.7, 0.05, 0, -0.08, 0.3, (0.4, 0.4, 0.4)))
+    c.append(box('slab_2', 11.5, 0.8, 0.03, 0.9, 0.8, 0.05, 0.07, 0, -0.5, (0.4, 0.4, 0.4)))
+    c.append(box('slab_3', 9.0, 3.8, 0.03, 0.9, 0.8, 0.05, 0, 0.08, 1.0, (0.4, 0.4, 0.4)))
     # rubble zones (spawn area x<2.5 kept clear)
     c += rubble(rng, 'rub_a', 3.0, 5.5, -1.3, 1.3, 35)
     c += rubble(rng, 'rub_b', 6.0, 8.0, -1.3, 1.3, 35)
     c += rubble(rng, 'rub_c', 10.5, 13.0, -1.3, 1.3, 35)
-    c += rubble(rng, 'rub_d', 8.0, 10.0, 2.0, 6.5, 40, 0.06, 0.2)
+    c += rubble(rng, 'rub_d', 8.0, 10.0, 2.0, 6.5, 40)
     # victims
     for n, x, y, yw in VICTIMS:
         c.append(victim(n, x, y, yw))

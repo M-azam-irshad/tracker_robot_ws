@@ -23,10 +23,10 @@ ros2 launch tracked_robot_description display.launch.py
 ```
 
 ## Modelling approach
-Each track is modelled as **4 powered wheels** (sprocket, 2 road wheels, idler) that carry the
-collision geometry and the drive joints, plus a **visual-only belt** wrapped around them.
-This is the standard, numerically stable way to simulate a skid-steer tracked vehicle in Gazebo.
+The real track is a raised-sprocket triangle (sprocket 18.8 cm above ground, two 8.45 cm rollers on the ground).
+Per side: 2 powered rollers (traction), 1 spinning visual sprocket, and a belt link carrying the STEP-derived visual
+mesh plus passive ramp/skid collisions. See `docs/diagrams/track_collision_profile.png`.
 
 ## Replacing primitives with the real CAD
-Dimensions are ESTIMATES taken from the NCRA chassis photo. Put the real measurements in
-`robot_properties.xacro`, and export STL/DAE meshes into `meshes/visual` and `meshes/collision`.
+Dimensions come from your measurement table and the STEP files (tagged [T]/[S]/[E] in `robot_properties.xacro`).
+Meshes are procedural (`scripts/generate_meshes.py`); swap in decimated CAD STLs with the same names/origins.

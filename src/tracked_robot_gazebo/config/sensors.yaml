@@ -8,7 +8,7 @@ gas_simulator:
     publish_rate: 10.0
     response_time_const: 3.0     # s, MQ-sensor lag
     noise_fraction: 0.03
-    sensor_offset_x: -0.18       # gas sensor position in base_link (matches robot_properties gas_x)
+    sensor_offset_x: -0.20       # gas sensor position in base_link (matches robot_properties gas_x)
     sensor_offset_y: 0.0
 
     gases: ["co", "ch4", "h2s"]

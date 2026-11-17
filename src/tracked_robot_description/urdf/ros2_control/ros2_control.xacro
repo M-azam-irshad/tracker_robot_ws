@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- ros2_control interface for Gazebo Harmonic (gz_ros2_control).
-     8 velocity-controlled wheel joints, consumed by diff_drive_controller (skid-steer). -->
+     6 velocity-controlled joints (2 rollers + sprocket per side), consumed by diff_drive_controller (skid-steer). -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="wheel_interface" params="joint">
@@ -19,13 +19,11 @@
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
     <xacro:wheel_interface joint="left_sprocket_wheel_joint"/>
-    <xacro:wheel_interface joint="left_road_1_wheel_joint"/>
-    <xacro:wheel_interface joint="left_road_2_wheel_joint"/>
-    <xacro:wheel_interface joint="left_idler_wheel_joint"/>
+    <xacro:wheel_interface joint="left_front_roller_wheel_joint"/>
+    <xacro:wheel_interface joint="left_rear_roller_wheel_joint"/>
     <xacro:wheel_interface joint="right_sprocket_wheel_joint"/>
-    <xacro:wheel_interface joint="right_road_1_wheel_joint"/>
-    <xacro:wheel_interface joint="right_road_2_wheel_joint"/>
-    <xacro:wheel_interface joint="right_idler_wheel_joint"/>
+    <xacro:wheel_interface joint="right_front_roller_wheel_joint"/>
+    <xacro:wheel_interface joint="right_rear_roller_wheel_joint"/>
   </ros2_control>
 
   <gazebo>

@@ -1,39 +1,38 @@
 <?xml version="1.0"?>
+<!-- Real track = triangle: raised drive sprocket on top + front & rear rollers on the ground.
+     SIMULATION MODEL (stable in Gazebo):
+       * 2 powered rollers per side carry the ground contact + traction  (collision cylinders, r = 8.45 cm)
+       * 1 sprocket per side: visual only, spins in sync (no collision)
+       * belt link: visual track mesh + passive low-friction collisions
+           - sloped front/rear runs (42.6 deg)  -> robot rides up over obstacles
+           - bottom run skid (floats 4 mm)      -> bridges small gaps / stops the belly sagging
+           - sprocket cap cylinder
+     Positive rotation about +Y drives the robot FORWARD. -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- One powered track wheel. Positive rotation about +Y drives the robot FORWARD (+X).
-       The wheel owns the collision geometry; the track belt is a separate visual-only link. -->
-  <xacro:macro name="track_wheel" params="prefix name x y">
+  <xacro:macro name="roller" params="prefix name x y">
     <link name="${prefix}_${name}_wheel">
       <visual>
-        <origin rpy="${pi/2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius - 0.012}" length="${flange_width}"/></geometry>
-        <material name="steel"/>
-      </visual>
-      <!-- spoke bar so wheel rotation is visible in Gazebo/RViz -->
-      <visual>
-        <geometry><box size="${(wheel_radius - 0.014)*1.7} ${flange_width + 0.004} 0.012"/></geometry>
-        <material name="safety_yellow"/>
+        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/wheels/roller.stl"/></geometry>
+        <material name="dark_grey"/>
       </visual>
       <collision>
         <origin rpy="${pi/2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <geometry><cylinder radius="${roller_radius}" length="${roller_col_width}"/></geometry>
       </collision>
       <inertial>
-        <mass value="${wheel_mass}"/>
-        <xacro:y_cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+        <mass value="${roller_mass}"/>
+        <xacro:y_cylinder_inertia m="${roller_mass}" r="${roller_radius}" h="${roller_col_width}"/>
       </inertial>
     </link>
-
     <joint name="${prefix}_${name}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child link="${prefix}_${name}_wheel"/>
-      <origin xyz="${x} ${y} ${wheel_z}" rpy="0 0 0"/>
+      <origin xyz="${x} ${y} ${roller_z}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
+      <limit effort="${roller_effort}" velocity="30"/>
       <dynamics damping="${wheel_damping}" friction="0.0"/>
     </joint>
-
-    <!-- skid-steer friction: high grip rolling, reduced sideways grip -->
     <gazebo reference="${prefix}_${name}_wheel">
       <mu1>${mu_longitudinal}</mu1>
       <mu2>${mu_lateral}</mu2>
@@ -43,44 +42,72 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Visual-only track belt wrapped around the wheels (fixed to the chassis) -->
+  <xacro:macro name="sprocket" params="prefix y">
+    <link name="${prefix}_sprocket_wheel">
+      <visual>
+        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/wheels/sprocket.stl"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <inertial>
+        <mass value="${sprocket_mass}"/>
+        <xacro:y_cylinder_inertia m="${sprocket_mass}" r="0.095" h="0.1"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}_sprocket_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_sprocket_wheel"/>
+      <origin xyz="0 ${y} ${sprocket_z}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="1.0" velocity="30"/>
+      <dynamics damping="${wheel_damping}" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
   <xacro:macro name="track_belt" params="prefix y">
     <link name="${prefix}_track_belt">
-      <visual> <!-- upper run -->
-        <origin xyz="0 0 ${wheel_radius - belt_thickness/2}"/>
-        <geometry><box size="${2*wheel_x_end} ${wheel_width} ${belt_thickness}"/></geometry>
+      <visual>
+        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/tracks/track_belt.stl"/></geometry>
         <material name="rubber"/>
       </visual>
-      <visual> <!-- lower run -->
-        <origin xyz="0 0 ${-wheel_radius + belt_thickness/2}"/>
-        <geometry><box size="${2*wheel_x_end} ${wheel_width} ${belt_thickness}"/></geometry>
-        <material name="rubber"/>
-      </visual>
-      <visual> <!-- front curve -->
-        <origin xyz="${wheel_x_end} 0 0" rpy="${pi/2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
-        <material name="rubber"/>
-      </visual>
-      <visual> <!-- rear curve -->
-        <origin xyz="${-wheel_x_end} 0 0" rpy="${pi/2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
-        <material name="rubber"/>
-      </visual>
+      <collision name="front_ramp">
+        <origin xyz="${ramp_cx} 0 ${ramp_cz}" rpy="0 ${ramp_pitch} 0"/>
+        <geometry><box size="${ramp_len} ${track_width - 0.01} ${ramp_thickness}"/></geometry>
+      </collision>
+      <collision name="rear_ramp">
+        <origin xyz="${-ramp_cx} 0 ${ramp_cz}" rpy="0 ${-ramp_pitch} 0"/>
+        <geometry><box size="${ramp_len} ${track_width - 0.01} ${ramp_thickness}"/></geometry>
+      </collision>
+      <collision name="bottom_skid">
+        <origin xyz="0 0 ${-sprocket_height + skid_clearance + skid_thickness/2}"/>
+        <geometry><box size="${2*roller_x} ${track_width - 0.01} ${skid_thickness}"/></geometry>
+      </collision>
+      <collision name="sprocket_cap">
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${sprocket_radius}" length="${track_width - 0.01}"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 -0.07"/>
+        <mass value="${belt_mass}"/>
+        <xacro:box_inertia m="${belt_mass}" x="0.47" y="${track_width}" z="0.2"/>
+      </inertial>
     </link>
     <joint name="${prefix}_track_belt_joint" type="fixed">
       <parent link="base_link"/>
       <child link="${prefix}_track_belt"/>
-      <origin xyz="0 ${y} ${wheel_z}"/>
+      <origin xyz="0 ${y} ${sprocket_z}"/>
     </joint>
+    <gazebo reference="${prefix}_track_belt">
+      <mu1>${mu_passive}</mu1>
+      <mu2>${mu_passive}</mu2>
+    </gazebo>
   </xacro:macro>
 
-  <!-- A complete track: belt + sprocket + 2 road wheels + idler -->
+  <!-- One complete track -->
   <xacro:macro name="track_side" params="prefix y">
     <xacro:track_belt prefix="${prefix}" y="${y}"/>
-    <xacro:track_wheel prefix="${prefix}" name="sprocket" x="${wheel_x_end}"  y="${y}"/>
-    <xacro:track_wheel prefix="${prefix}" name="road_1"   x="${wheel_x_road}" y="${y}"/>
-    <xacro:track_wheel prefix="${prefix}" name="road_2"   x="${-wheel_x_road}" y="${y}"/>
-    <xacro:track_wheel prefix="${prefix}" name="idler"    x="${-wheel_x_end}" y="${y}"/>
+    <xacro:sprocket   prefix="${prefix}" y="${y}"/>
+    <xacro:roller prefix="${prefix}" name="front_roller" x="${roller_x}"  y="${y}"/>
+    <xacro:roller prefix="${prefix}" name="rear_roller"  x="${-roller_x}" y="${y}"/>
   </xacro:macro>
 
 </robot>

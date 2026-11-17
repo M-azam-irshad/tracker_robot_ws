@@ -1,42 +1,64 @@
 <?xml version="1.0"?>
 <!-- Single source of truth for every dimension / mass.
-     !! ESTIMATED from the NCRA chassis photo - replace with measured / CAD values. !! -->
+     SOURCES:  [T] = your measurement table   [S] = extracted from the SolidWorks STEP files
+               [E] = ESTIMATE (replace when known)                                              -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ===== Chassis (open aluminium box with motors inside) ===== -->
-  <xacro:property name="chassis_length"   value="0.50"/>
-  <xacro:property name="chassis_width"    value="0.32"/>
-  <xacro:property name="chassis_height"   value="0.14"/>
-  <xacro:property name="chassis_mass"     value="18.0"/>   <!-- kg, incl. motors, battery, electronics -->
-  <xacro:property name="chassis_com_z"    value="-0.02"/>  <!-- CoG slightly below geometric centre -->
-  <xacro:property name="ground_clearance" value="0.04"/>   <!-- chassis belly to ground -->
+  <!-- ===== Chassis (open sheet-metal box with 2 motors inside) ===== -->
+  <xacro:property name="chassis_length"   value="0.52"/>    <!-- [T] 52 cm -->
+  <xacro:property name="chassis_width"    value="0.265"/>   <!-- [T] 26.5 cm -->
+  <xacro:property name="chassis_height"   value="0.16"/>    <!-- [E] box depth -->
+  <xacro:property name="ground_clearance" value="0.125"/>   <!-- [T] belly to ground 12.5 cm -->
+  <xacro:property name="chassis_mass"     value="13.0"/>    <!-- [E] total robot ~25 kg (given) -->
+  <xacro:property name="chassis_com_z"    value="-0.03"/>   <!-- [E] motors/battery sit low -->
 
-  <!-- ===== Tracks (modelled as powered wheels + visual belt) ===== -->
-  <xacro:property name="wheel_radius"     value="0.07"/>   <!-- = outer radius of track at the ground -->
-  <xacro:property name="wheel_width"      value="0.06"/>   <!-- collision width = belt width -->
-  <xacro:property name="flange_width"     value="0.07"/>   <!-- visual rim, slightly wider than belt -->
-  <xacro:property name="wheel_mass"       value="0.6"/>
-  <xacro:property name="belt_thickness"   value="0.015"/>
-  <xacro:property name="track_y_offset"   value="0.21"/>   <!-- track centre-line to robot centre-line -->
-  <xacro:property name="wheel_x_end"      value="0.25"/>   <!-- sprocket / idler axle x -->
-  <xacro:property name="wheel_x_road"     value="0.0833"/> <!-- inner road-wheel axle x -->
+  <!-- ===== Track geometry (side profile from track__updated.step) ===== -->
+  <xacro:property name="track_width"        value="0.115"/>   <!-- [T] 11.5 cm -->
+  <xacro:property name="track_y_offset"     value="0.235"/>   <!-- [T] mid-to-mid 47 cm -> 23.5 each side -->
+  <xacro:property name="sprocket_height"    value="0.188"/>   <!-- [S] ground (lug tips) to sprocket axle; table says 17 cm to belt base + 1.9 cm lugs -->
+  <xacro:property name="sprocket_radius"    value="0.112"/>   <!-- [S] path 95 mm + 17 mm belt/lug -->
+  <xacro:property name="roller_x"           value="0.1531"/>  <!-- [S] roller axle offset along x (+/-) -->
+  <xacro:property name="roller_drop"        value="0.1035"/>  <!-- [S] roller axle below sprocket axle -->
+  <xacro:property name="roller_radius"      value="${sprocket_height - roller_drop}"/> <!-- 0.0845 = rolling radius at ground -->
+  <xacro:property name="roller_col_width"   value="0.105"/>
 
-  <!-- ===== Wheel / track-ground contact (skid-steer tuning knobs) ===== -->
-  <xacro:property name="mu_longitudinal"  value="0.9"/>
+  <!-- Sloped belt runs (collision ramps) - numbers from scripts/generate_meshes.py ramp_numbers() -->
+  <xacro:property name="ramp_len"       value="0.1827"/>
+  <xacro:property name="ramp_cx"        value="0.139"/>      <!-- front ramp centre x in belt frame (rear = -x) -->
+  <xacro:property name="ramp_cz"        value="0.0161"/>     <!-- centre z in belt frame -->
+  <xacro:property name="ramp_pitch"     value="0.7438"/>     <!-- 42.6 deg (rear = -pitch) -->
+  <xacro:property name="ramp_thickness" value="0.012"/>
+  <xacro:property name="skid_thickness" value="0.012"/>
+  <xacro:property name="skid_clearance" value="0.004"/>      <!-- bottom run floats 4 mm above ground: rollers carry flat-ground load, skid takes over on bumps -->
+
+  <!-- ===== Masses [E] (sum with chassis = ~25 kg) ===== -->
+  <xacro:property name="roller_mass"    value="0.9"/>
+  <xacro:property name="sprocket_mass"  value="1.2"/>
+  <xacro:property name="belt_mass"      value="2.5"/>        <!-- rubber track + side plate per side -->
+
+  <!-- ===== Drive ===== -->
+  <xacro:property name="motor_stall_torque" value="10.0"/>   <!-- [given] N*m per side, at the sprocket (ASSUMED) -->
+  <!-- Track pull = T / sprocket_radius. Share it over the 2 ground-contact rollers: -->
+  <xacro:property name="roller_effort"  value="${motor_stall_torque * roller_radius / (2.0 * sprocket_radius)}"/>
+
+  <!-- ===== Ground contact tuning (skid-steer) ===== -->
+  <xacro:property name="mu_longitudinal"  value="1.0"/>
   <xacro:property name="mu_lateral"       value="0.5"/>
+  <xacro:property name="mu_passive"       value="0.05"/>     <!-- ramps / skid: let rocks slide, no drag -->
   <xacro:property name="wheel_damping"    value="0.05"/>
 
-  <!-- ===== Derived ===== -->
-  <xacro:property name="base_link_z"   value="${chassis_height/2 + ground_clearance}"/>   <!-- footprint -> base_link -->
-  <xacro:property name="wheel_z"       value="${-(chassis_height/2 + ground_clearance) + wheel_radius}"/> <!-- in base_link -->
-  <xacro:property name="chassis_top_z" value="${chassis_height/2}"/>                      <!-- in base_link -->
+  <!-- ===== Derived (frames) ===== -->
+  <xacro:property name="base_link_z"   value="${ground_clearance + chassis_height/2}"/>  <!-- footprint -> base_link (chassis centre) -->
+  <xacro:property name="sprocket_z"    value="${sprocket_height - base_link_z}"/>        <!-- in base_link -->
+  <xacro:property name="roller_z"      value="${roller_radius - base_link_z}"/>
+  <xacro:property name="chassis_top_z" value="${chassis_height/2}"/>
 
   <!-- ===== Sensor placement (base_link frame) ===== -->
-  <xacro:property name="lidar_x"       value="0.05"/>
-  <xacro:property name="lidar_mast_h"  value="0.20"/>
-  <xacro:property name="kinect_x"      value="0.20"/>
+  <xacro:property name="lidar_x"       value="0.02"/>
+  <xacro:property name="lidar_mast_h"  value="0.14"/>
+  <xacro:property name="kinect_x"      value="0.22"/>
   <xacro:property name="kinect_post_h" value="0.06"/>
-  <xacro:property name="gas_x"         value="-0.18"/>
+  <xacro:property name="gas_x"         value="-0.20"/>
   <xacro:property name="gas_mast_h"    value="0.12"/>
   <xacro:property name="mic_x"         value="-0.08"/>
 

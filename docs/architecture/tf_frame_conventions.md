@@ -5,9 +5,10 @@ map -> odom -> base_footprint -> base_link -+- imu_link
                                             |- kinect_mount_link -> camera_link
                                             |- gas_mount_link -> gas_sensor_link
                                             |- microphone_link
-                                            |- left/right_track_belt (visual)
-                                            `- {left,right}_{sprocket,road_1,road_2,idler}_wheel
+                                            |- {left,right}_track_belt   (visual + ramp collisions, fixed)
+                                            |- {left,right}_sprocket_wheel
+                                            `- {left,right}_{front,rear}_roller_wheel
 ```
+* base_link = geometric centre of the chassis box, 0.205 m above ground; base_footprint is on the ground.
 * x forward, y left, z up. Positive wheel rotation about +Y moves the robot forward.
 * `odom -> base_footprint` is published by diff_drive_controller. `map -> odom` will come from SLAM.
-* `camera_link` is x-forward (not an optical frame); Gazebo point clouds are published in it.

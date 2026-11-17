@@ -3,20 +3,18 @@ diff_drive_controller:
   ros__parameters:
     left_wheel_names:
       - left_sprocket_wheel_joint
-      - left_road_1_wheel_joint
-      - left_road_2_wheel_joint
-      - left_idler_wheel_joint
+      - left_front_roller_wheel_joint
+      - left_rear_roller_wheel_joint
     right_wheel_names:
       - right_sprocket_wheel_joint
-      - right_road_1_wheel_joint
-      - right_road_2_wheel_joint
-      - right_idler_wheel_joint
+      - right_front_roller_wheel_joint
+      - right_rear_roller_wheel_joint
 
-    wheel_separation: 0.42             # = 2 * track_y_offset
-    wheel_radius: 0.07
+    wheel_separation: 0.47             # = 2 * track_y_offset (track mid-to-mid, measured)
+    wheel_radius: 0.0845               # roller rolling radius at the ground (robot_properties.xacro)
     # Tracks slip when turning -> effective track width is larger than geometric.
     # Tune (1.0 ... 2.0) so that a commanded 360 deg turn gives a 360 deg odometry turn.
-    wheel_separation_multiplier: 1.0
+    wheel_separation_multiplier: 1.3
 
     cmd_vel_timeout: 0.5
     publish_rate: 50.0
@@ -30,14 +28,14 @@ diff_drive_controller:
 
     linear.x.has_velocity_limits: true
     linear.x.has_acceleration_limits: true
-    linear.x.max_velocity: 0.8
-    linear.x.min_velocity: -0.8
-    linear.x.max_acceleration: 1.5
-    linear.x.min_acceleration: -1.5
+    linear.x.max_velocity: 0.6
+    linear.x.min_velocity: -0.6
+    linear.x.max_acceleration: 1.0
+    linear.x.min_acceleration: -1.0
 
     angular.z.has_velocity_limits: true
     angular.z.has_acceleration_limits: true
-    angular.z.max_velocity: 1.5
-    angular.z.min_velocity: -1.5
+    angular.z.max_velocity: 1.2
+    angular.z.min_velocity: -1.2
     angular.z.max_acceleration: 3.0
     angular.z.min_acceleration: -3.0
