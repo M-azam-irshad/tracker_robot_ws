@@ -9,8 +9,27 @@
     <origin xyz="0 0 ${base_link_z}" rpy="0 0 0"/>
   </joint>
 
-  <!-- Open sheet-metal chassis (origin = geometric centre). Collision is ONE solid box. -->
   <xacro:property name="wall" value="0.004"/>
+
+  <!-- axle stub: 19 mm shaft from the chassis wall out to the track-frame plate -->
+  <xacro:macro name="axle_stub" params="x y z">
+    <visual>
+      <origin xyz="${x} ${y} ${z}" rpy="${pi/2} 0 0"/>
+      <geometry><cylinder radius="${shaft_radius}" length="0.04"/></geometry>
+      <material name="steel"/>
+    </visual>
+  </xacro:macro>
+
+  <!-- camo patch glued on a wall (visual only) -->
+  <xacro:macro name="patch" params="x y z sx sy sz mat">
+    <visual>
+      <origin xyz="${x} ${y} ${z}"/>
+      <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+      <material name="${mat}"/>
+    </visual>
+  </xacro:macro>
+
+  <!-- Open sheet-metal chassis (origin = geometric centre). Collision is ONE solid box. -->
   <link name="base_link">
     <visual> <!-- floor -->
       <origin xyz="0 0 ${-chassis_height/2 + wall/2}"/>
@@ -37,26 +56,50 @@
       <geometry><box size="${chassis_length} ${wall} ${chassis_height}"/></geometry>
       <material name="camo_green"/>
     </visual>
-    <visual> <!-- drive motor 1 (Motor.step: 80 mm dia x 169 mm) -->
+
+    <!-- top rim (dark) -->
+    <visual><origin xyz="0 ${chassis_width/2} ${chassis_height/2}"/><geometry><box size="${chassis_length} 0.014 0.012"/></geometry><material name="dark_grey"/></visual>
+    <visual><origin xyz="0 ${-chassis_width/2} ${chassis_height/2}"/><geometry><box size="${chassis_length} 0.014 0.012"/></geometry><material name="dark_grey"/></visual>
+    <visual><origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/><geometry><box size="0.014 ${chassis_width} 0.012"/></geometry><material name="dark_grey"/></visual>
+    <visual><origin xyz="${-chassis_length/2} 0 ${chassis_height/2}"/><geometry><box size="0.014 ${chassis_width} 0.012"/></geometry><material name="dark_grey"/></visual>
+
+    <!-- camo patches (outer faces) -->
+    <xacro:patch x="0.10"  y="${chassis_width/2 + 0.001}"  z="0.03"  sx="0.16" sy="0.003" sz="0.10" mat="camo_dark"/>
+    <xacro:patch x="-0.12" y="${chassis_width/2 + 0.001}"  z="-0.02" sx="0.14" sy="0.003" sz="0.12" mat="camo_tan"/>
+    <xacro:patch x="0.08"  y="${-chassis_width/2 - 0.001}" z="-0.03" sx="0.18" sy="0.003" sz="0.10" mat="camo_tan"/>
+    <xacro:patch x="-0.10" y="${-chassis_width/2 - 0.001}" z="0.04"  sx="0.15" sy="0.003" sz="0.11" mat="camo_dark"/>
+    <xacro:patch x="${chassis_length/2 + 0.001}" y="0.05"  z="0.02"  sx="0.003" sy="0.12" sz="0.12" mat="camo_dark"/>
+    <xacro:patch x="${chassis_length/2 + 0.001}" y="-0.06" z="-0.03" sx="0.003" sy="0.10" sz="0.10" mat="camo_tan"/>
+
+    <!-- interior: two drive motors (Motor.step 80 mm x 169 mm) + battery -->
+    <visual>
       <origin xyz="0.07 0 ${-chassis_height/2 + wall + 0.04}" rpy="${pi/2} 0 0"/>
       <geometry><cylinder radius="0.04" length="0.169"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <visual> <!-- drive motor 2 -->
-      <origin xyz="-0.07 0 ${-chassis_height/2 + wall + 0.04}" rpy="${pi/2} 0 0"/>
+    <visual>
+      <origin xyz="-0.02 0 ${-chassis_height/2 + wall + 0.04}" rpy="${pi/2} 0 0"/>
       <geometry><cylinder radius="0.04" length="0.169"/></geometry>
       <material name="dark_grey"/>
     </visual>
-    <visual> <!-- left side plate (carries sprocket + roller axles) -->
-      <origin xyz="0 ${chassis_width/2 + 0.015} -0.07"/>
-      <geometry><box size="0.34 0.008 0.14"/></geometry>
-      <material name="dark_grey"/>
+    <visual>
+      <origin xyz="-0.17 0 ${-chassis_height/2 + wall + 0.05}"/>
+      <geometry><box size="0.14 0.15 0.10"/></geometry>
+      <material name="battery_blue"/>
     </visual>
-    <visual> <!-- right side plate -->
-      <origin xyz="0 ${-chassis_width/2 - 0.015} -0.07"/>
-      <geometry><box size="0.34 0.008 0.14"/></geometry>
-      <material name="dark_grey"/>
-    </visual>
+
+    <!-- rear mounting brackets (black L-brackets visible in the photos) -->
+    <visual><origin xyz="${-chassis_length/2 - 0.02} 0.09 ${chassis_height/2 - 0.03}"/><geometry><box size="0.04 0.05 0.06"/></geometry><material name="sensor_black"/></visual>
+    <visual><origin xyz="${-chassis_length/2 - 0.02} -0.09 ${chassis_height/2 - 0.03}"/><geometry><box size="0.04 0.05 0.06"/></geometry><material name="sensor_black"/></visual>
+
+    <!-- axle stubs: chassis wall -> track-frame plate (left +y, right -y) -->
+    <xacro:axle_stub x="0"           y="${chassis_width/2 + 0.02}"  z="${sprocket_z}"/>
+    <xacro:axle_stub x="${roller_x}"  y="${chassis_width/2 + 0.02}"  z="${roller_z}"/>
+    <xacro:axle_stub x="${-roller_x}" y="${chassis_width/2 + 0.02}"  z="${roller_z}"/>
+    <xacro:axle_stub x="0"           y="${-chassis_width/2 - 0.02}" z="${sprocket_z}"/>
+    <xacro:axle_stub x="${roller_x}"  y="${-chassis_width/2 - 0.02}" z="${roller_z}"/>
+    <xacro:axle_stub x="${-roller_x}" y="${-chassis_width/2 - 0.02}" z="${roller_z}"/>
+
     <collision>
       <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
     </collision>

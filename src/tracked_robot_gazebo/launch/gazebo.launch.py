@@ -3,7 +3,7 @@
    headless:=true runs the server only (no GUI)."""
 import os
 
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import PackageNotFoundError, get_package_prefix, get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (AppendEnvironmentVariable, DeclareLaunchArgument,
                             IncludeLaunchDescription, OpaqueFunction)
@@ -30,7 +30,16 @@ def _launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     share = get_package_share_directory('tracked_robot_gazebo')
     desc_share = get_package_share_directory('tracked_robot_description')
-    return LaunchDescription([
+
+    # optional tread-animation plugin (package tracked_robot_gz_plugins); skipped silently if not built
+    plugin_env = []
+    try:
+        plugin_env.append(AppendEnvironmentVariable(
+            'GZ_SIM_SYSTEM_PLUGIN_PATH', os.path.join(get_package_prefix('tracked_robot_gz_plugins'), 'lib')))
+    except PackageNotFoundError:
+        pass
+
+    return LaunchDescription(plugin_env + [
         DeclareLaunchArgument('world', default_value='search_and_rescue_world'),
         DeclareLaunchArgument('headless', default_value='false'),
         # lets Gazebo resolve model:// and package:// resources (future CAD meshes)

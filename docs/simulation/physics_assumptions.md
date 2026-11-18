@@ -8,3 +8,5 @@
 * Obstacle limit of this geometry: ~ roller radius (8.5 cm). Rocks in the world are <= 8 cm; taller obstacles act as walls.
   Real belts grip better over edges, so the sim is slightly pessimistic.
 * Turning: `wheel_separation_multiplier` 1.3 (tracked skid-steer). Calibrate: command a 360 deg turn, compare odom.
+
+* Tread lugs are visual-only (no collision, no mass); they never affect physics.

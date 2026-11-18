@@ -7,10 +7,10 @@
   <!-- ===== Chassis (open sheet-metal box with 2 motors inside) ===== -->
   <xacro:property name="chassis_length"   value="0.52"/>    <!-- [T] 52 cm -->
   <xacro:property name="chassis_width"    value="0.265"/>   <!-- [T] 26.5 cm -->
-  <xacro:property name="chassis_height"   value="0.16"/>    <!-- [E] box depth -->
+  <xacro:property name="chassis_height"   value="0.23"/>    <!-- [S] internal_chassis.step is 255 mm tall incl. flanges; photos show walls above the track top -->
   <xacro:property name="ground_clearance" value="0.125"/>   <!-- [T] belly to ground 12.5 cm -->
   <xacro:property name="chassis_mass"     value="13.0"/>    <!-- [E] total robot ~25 kg (given) -->
-  <xacro:property name="chassis_com_z"    value="-0.03"/>   <!-- [E] motors/battery sit low -->
+  <xacro:property name="chassis_com_z"    value="-0.06"/>   <!-- [E] motors/battery sit low -->
 
   <!-- ===== Track geometry (side profile from track__updated.step) ===== -->
   <xacro:property name="track_width"        value="0.115"/>   <!-- [T] 11.5 cm -->
@@ -30,6 +30,9 @@
   <xacro:property name="ramp_thickness" value="0.012"/>
   <xacro:property name="skid_thickness" value="0.012"/>
   <xacro:property name="skid_clearance" value="0.004"/>      <!-- bottom run floats 4 mm above ground: rollers carry flat-ground load, skid takes over on bumps -->
+
+  <xacro:property name="plate_y_off"      value="0.0665"/>  <!-- track-frame plate sits this far inboard of the track centre-line -->
+  <xacro:property name="shaft_radius"     value="0.0095"/>  <!-- [T] internal shaft 1.9 cm -->
 
   <!-- ===== Masses [E] (sum with chassis = ~25 kg) ===== -->
   <xacro:property name="roller_mass"    value="0.9"/>
@@ -55,7 +58,7 @@
 
   <!-- ===== Sensor placement (base_link frame) ===== -->
   <xacro:property name="lidar_x"       value="0.02"/>
-  <xacro:property name="lidar_mast_h"  value="0.14"/>
+  <xacro:property name="lidar_mast_h"  value="0.12"/>
   <xacro:property name="kinect_x"      value="0.22"/>
   <xacro:property name="kinect_post_h" value="0.06"/>
   <xacro:property name="gas_x"         value="-0.20"/>

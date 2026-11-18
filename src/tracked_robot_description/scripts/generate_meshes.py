@@ -95,37 +95,34 @@ def cyl_vf(center, radius, length, n=32, y_axis=True):
 
 
 # ---- track path ----------------------------------------------------------------------------
-CIRCLES = [  # CCW hull order: front roller -> sprocket -> rear roller
-    (np.array([ROLLER_X, -ROLLER_DROP]), R_ROLLER_PATH),
-    (np.array([0.0, 0.0]), R_SPROCKET_PATH),
-    (np.array([-ROLLER_X, -ROLLER_DROP]), R_ROLLER_PATH),
+CIRCLES = [  # CCW hull order: front roller -> sprocket -> rear roller   (x, z, path radius)
+    (ROLLER_X, -ROLLER_DROP, R_ROLLER_PATH),
+    (0.0, 0.0, R_SPROCKET_PATH),
+    (-ROLLER_X, -ROLLER_DROP, R_ROLLER_PATH),
 ]
 
 
 def tangent_normal(A, rA, B, rB):
     """outward unit normal of the external tangent line when travelling A->B counter-clockwise"""
+    A, B = np.asarray(A, float), np.asarray(B, float)
     d = np.linalg.norm(B - A)
     u = (B - A) / d
-    perp = np.array([u[1], -u[0]])               # u rotated -90 deg (right-hand side)
+    perp = np.array([u[1], -u[0]])
     k = (rA - rB) / d
     return k * u + math.sqrt(max(0.0, 1 - k * k)) * perp
 
 
-def build_path(step_deg=4.0):
-    """returns list of (point, outward normal) closed loop and the 3 tangent segments"""
-    n_c = len(CIRCLES)
-    norms = [tangent_normal(CIRCLES[i][0], CIRCLES[i][1], CIRCLES[(i + 1) % n_c][0], CIRCLES[(i + 1) % n_c][1])
-             for i in range(n_c)]
-    segs = []
-    for i in range(n_c):
-        A, rA = CIRCLES[i]
-        B, rB = CIRCLES[(i + 1) % n_c]
-        segs.append((A + rA * norms[i], B + rB * norms[i], norms[i]))
+def build_path(circles=None, extra=0.0, step_deg=1.0):
+    """closed polyline [(point, outward normal)] around the circles, radii grown by `extra`.
+    NOTE: the identical algorithm lives in plugins/TrackAnimator.cc - keep both in sync."""
+    circles = circles or CIRCLES
+    n_c = len(circles)
+    C = [(np.array([c[0], c[1]]), c[2] + extra) for c in circles]
+    norms = [tangent_normal(C[i][0], C[i][1], C[(i + 1) % n_c][0], C[(i + 1) % n_c][1]) for i in range(n_c)]
     pts = []
     for i in range(n_c):
-        C, r = CIRCLES[i]
-        n_in = norms[i - 1]
-        n_out = norms[i]
+        cen, r = C[i]
+        n_in, n_out = norms[i - 1], norms[i]
         a0 = math.atan2(n_in[1], n_in[0])
         a1 = math.atan2(n_out[1], n_out[0])
         while a1 < a0:
@@ -134,96 +131,152 @@ def build_path(step_deg=4.0):
         for j in range(k + 1):
             a = a0 + (a1 - a0) * j / k
             nn = np.array([math.cos(a), math.sin(a)])
-            pts.append((C + r * nn, nn))
-    return pts, segs
+            pts.append((cen + r * nn, nn))
+    return pts
 
 
 def to3(p2, y):
     return np.array([p2[0], y, p2[1]])
 
 
-def make_belt():
-    pts, _ = build_path()
+def make_band():
+    """smooth rubber band (no lugs - lugs are separate, animated visuals)"""
+    pts = build_path(step_deg=4.0)
     m = Mesh()
     hw = TRACK_W / 2
     Y = np.array([0, 1.0, 0])
     N = len(pts)
     for i in range(N):
-        (p0, n0), (p1, n1) = pts[i], pts[(i + 1) % N]
-        for (a, b, na, nb, e) in ((p0, p1, n0, n1, 1), ):
-            o0, o1 = a + BELT_T * na, b + BELT_T * nb
-            nm = to3((na + nb) / 2, 0) * 0 + np.array([(na + nb)[0] / 2, 0, (na + nb)[1] / 2])
-            m.quad(to3(o0, -hw), to3(o1, -hw), to3(o1, hw), to3(o0, hw), nm)             # outer
-            m.quad(to3(a, -hw), to3(b, -hw), to3(b, hw), to3(a, hw), -nm)                # inner
-            for sy in (-1, 1):                                                           # sides
-                m.quad(to3(a, sy * hw), to3(b, sy * hw), to3(o1, sy * hw), to3(o0, sy * hw), sy * Y)
-    # lugs (cross cleats) at constant arc-length pitch
-    seglen = [np.linalg.norm(pts[(i + 1) % N][0] - pts[i][0]) for i in range(N)]
-    total = sum(seglen)
-    count = int(total / LUG_PITCH)
-    for k in range(count):
-        s = k * total / count
-        i = 0
-        while s > seglen[i]:
-            s -= seglen[i]
-            i += 1
-        (p0, n0), (p1, n1) = pts[i], pts[(i + 1) % N]
-        t = s / seglen[i]
-        p = p0 + (p1 - p0) * t
-        n = n0 + (n1 - n0) * t
-        n /= np.linalg.norm(n)
-        tang = np.array([n[1], -n[0]])
-        center = p + n * (BELT_T + LUG_H) / 2 - n * 0.0
-        h = BELT_T + LUG_H
-        m.convex(box_vf(to3(center, 0), to3(tang, 0) * 0 + np.array([tang[0], 0, tang[1]]),
-                        np.array([n[0], 0, n[1]]), np.array([0, 1.0, 0]), (LUG_T, h, TRACK_W)))
+        (a, na), (b, nb) = pts[i], pts[(i + 1) % N]
+        o0, o1 = a + BELT_T * na, b + BELT_T * nb
+        nm = np.array([(na + nb)[0] / 2, 0, (na + nb)[1] / 2])
+        m.quad(to3(o0, -hw), to3(o1, -hw), to3(o1, hw), to3(o0, hw), nm)
+        m.quad(to3(a, -hw), to3(b, -hw), to3(b, hw), to3(a, hw), -nm)
+        for sy in (-1, 1):
+            m.quad(to3(a, sy * hw), to3(b, sy * hw), to3(o1, sy * hw), to3(o0, sy * hw), sy * Y)
     return m
 
 
+def lug_path():
+    """centre-line of the lugs: band outer surface + half lug height"""
+    pts = build_path(extra=BELT_T + LUG_H / 2)
+    P = [p for p, _ in pts]
+    seg = [np.linalg.norm(P[(i + 1) % len(P)] - P[i]) for i in range(len(P))]
+    return P, seg
+
+
+def lug_poses():
+    P, seg = lug_path()
+    total = sum(seg)
+    count = int(round(total / LUG_PITCH))
+    out = []
+    for k in range(count):
+        s = k * total / count
+        i = 0
+        while s > seg[i]:
+            s -= seg[i]
+            i += 1
+        p0, p1 = P[i], P[(i + 1) % len(P)]
+        t = s / seg[i]
+        pos = p0 + (p1 - p0) * t
+        d = (p1 - p0) / seg[i]
+        out.append((pos[0], pos[1], -math.atan2(d[1], d[0])))     # x, z, pitch
+    return out, total
+
+
+def write_lug_xacro(path):
+    poses, total = lug_poses()
+    circ = ' '.join(f'{c[0]:.5f} {c[1]:.5f} {c[2] + BELT_T + LUG_H / 2:.5f}' for c in CIRCLES)
+    lines = ['<?xml version="1.0"?>',
+             '<!-- AUTO-GENERATED by scripts/generate_meshes.py - do not edit by hand.',
+             '     Individual tread lugs (visual only). The TrackAnimator Gazebo plugin moves them along the belt path. -->',
+             '<robot xmlns:xacro="http://www.ros.org/wiki/xacro">',
+             f'  <xacro:property name="lug_count"   value="{len(poses)}"/>',
+             f'  <xacro:property name="lug_circles" value="{circ}"/>',
+             f'  <xacro:property name="lug_path_length" value="{total:.5f}"/>',
+             '  <xacro:macro name="track_lugs" params="prefix">']
+    for i, (x, z, pitch) in enumerate(poses):
+        lines.append(f'    <visual name="${{prefix}}_lug_{i}"><origin xyz="{x:.5f} 0 {z:.5f}" rpy="0 {pitch:.5f} 0"/>'
+                     f'<geometry><box size="{LUG_T} {TRACK_W} {LUG_H}"/></geometry><material name="rubber"/></visual>')
+    lines += ['  </xacro:macro>', '</robot>', '']
+    with open(path, 'w') as fh:
+        fh.write('\n'.join(lines))
+    print('wrote', os.path.relpath(path, HERE), len(poses), 'lugs, path length', round(total, 4))
+
+
 def make_roller():
+    """plastic roller: tyre, spoke ribs on both faces, long hub that touches the track frame, bolt + hex nut"""
     m = Mesh()
-    m.convex(cyl_vf((0, 0, 0), R_ROLLER_PATH - 0.004, 0.09))        # tyre
-    m.convex(cyl_vf((0, 0, 0), 0.03, 0.125))                          # hub
-    m.convex(cyl_vf((0, 0, 0), R_ROLLER_PATH - 0.004, 0.12)) if False else None
-    for k in range(6):                                                # visible spokes (rotation cue)
-        a = math.pi * k / 6
-        t = np.array([math.cos(a), 0, math.sin(a)])
-        nn = np.array([-math.sin(a), 0, math.cos(a)])
-        m.convex(box_vf((0, 0, 0), t, nn, np.array([0, 1.0, 0]), (2 * (R_ROLLER_PATH - 0.012), 0.012, 0.1)))
+    Yv = np.array([0, 1.0, 0])
+    m.convex(cyl_vf((0, 0, 0), R_ROLLER_PATH - 0.002, 0.09, n=40))               # tyre
+    m.convex(cyl_vf((0, 0, 0), 0.026, 0.125, n=24))                               # hub boss (|y|<=0.0625)
+    for sy in (-1, 1):
+        m.convex(cyl_vf((0, sy * 0.044, 0), 0.05, 0.008, n=32))                    # raised ring on the face
+        m.convex(cyl_vf((0, sy * 0.0685, 0), 0.0165, 0.012, n=6))                  # hex nut
+        m.convex(cyl_vf((0, sy * 0.074, 0), 0.0095, 0.012, n=16))                  # bolt end (19 mm shaft)
+        for k in range(8):                                                         # ribs: visible rotation cue
+            a = math.pi * k / 8
+            t = np.array([math.cos(a), 0, math.sin(a)])
+            nn = np.array([-math.sin(a), 0, math.cos(a)])
+            m.convex(box_vf((0, sy * 0.048, 0), t, nn, Yv, (2 * (R_ROLLER_PATH - 0.008), 0.008, 0.012)))
     return m
 
 
 def make_sprocket(teeth=14):
+    """drive sprocket: toothed disc (teeth reach into the belt), long hub touching the track frame, bolt + nut"""
     m = Mesh()
-    m.convex(cyl_vf((0, 0, 0), R_SPROCKET_PATH - 0.01, 0.1))
-    m.convex(cyl_vf((0, 0, 0), 0.035, 0.13))
-    for k in range(teeth):
+    Yv = np.array([0, 1.0, 0])
+    m.convex(cyl_vf((0, 0, 0), 0.075, 0.085, n=48))                                # disc
+    m.convex(cyl_vf((0, 0, 0), 0.035, 0.125, n=24))                                # hub boss
+    for sy in (-1, 1):
+        m.convex(cyl_vf((0, sy * 0.0455, 0), 0.055, 0.008, n=32))
+        m.convex(cyl_vf((0, sy * 0.0685, 0), 0.0185, 0.012, n=6))
+        m.convex(cyl_vf((0, sy * 0.074, 0), 0.0095, 0.012, n=16))
+    for k in range(teeth):                                                         # teeth / vanes
         a = 2 * math.pi * k / teeth
         t = np.array([math.cos(a), 0, math.sin(a)])
         nn = np.array([-math.sin(a), 0, math.cos(a)])
-        c = t * (R_SPROCKET_PATH - 0.004)
-        m.convex(box_vf(c, t, nn, np.array([0, 1.0, 0]), (0.022, 0.012, 0.1)))
+        m.convex(box_vf(t * 0.087, t, nn, Yv, (0.026, 0.014, 0.085)))
+    return m
+
+
+def make_frame(plate_r=0.055, t=0.008):
+    """triangular track-frame side plate: convex hull of three discs around the three axles"""
+    pts = build_path(circles=[(c[0], c[1], plate_r) for c in CIRCLES], step_deg=6.0)
+    ring = [p for p, _ in pts]
+    verts, faces = [], []
+    n = len(ring)
+    for sy in (-1, 1):
+        for p in ring:
+            verts.append(np.array([p[0], sy * t / 2, p[1]]))
+    cen_lo = len(verts)
+    verts.append(np.array([0, -t / 2, np.mean([p[1] for p in ring])]))
+    verts.append(np.array([0, t / 2, np.mean([p[1] for p in ring])]))
+    for i in range(n):
+        j = (i + 1) % n
+        faces += [(cen_lo, j, i), (cen_lo + 1, n + i, n + j), (i, j, n + j), (i, n + j, n + i)]
+    m = Mesh()
+    m.convex((verts, faces))
     return m
 
 
 def ramp_numbers():
-    """collision ramps = the two sloped belt runs between rollers and sprocket (visual radii incl. lugs)"""
+    """collision ramps = the two sloped belt runs (visual radii incl. lugs)"""
     off = BELT_T + LUG_H
-    radii = [R_ROLLER_PATH + off, R_SPROCKET_PATH + off, R_ROLLER_PATH + off]
-    circ = [(CIRCLES[i][0], radii[i]) for i in range(3)]
     res = {}
+    circ = [((c[0], c[1]), c[2] + off) for c in CIRCLES]
     for i, name in ((0, 'front'), (1, 'rear')):
-        A, rA = circ[i]
-        B, rB = circ[(i + 1) % 3]
+        (A, rA), (B, rB) = circ[i], circ[(i + 1) % 3]
         n = tangent_normal(A, rA, B, rB)
-        pa, pb = A + rA * n, B + rB * n
-        res[name] = (pa, pb, n)
+        res[name] = (np.array(A) + rA * n, np.array(B) + rB * n, n)
     return res
 
 
 if __name__ == '__main__':
-    make_belt().save(os.path.join(OUT, 'tracks', 'track_belt.stl'))
+    make_band().save(os.path.join(OUT, 'tracks', 'track_band.stl'))
+    make_frame().save(os.path.join(OUT, 'tracks', 'track_frame.stl'))
     make_roller().save(os.path.join(OUT, 'wheels', 'roller.stl'))
     make_sprocket().save(os.path.join(OUT, 'wheels', 'sprocket.stl'))
+    write_lug_xacro(os.path.join(HERE, '..', 'urdf', 'robot', 'track_lugs.xacro'))
     for name, (pa, pb, n) in ramp_numbers().items():
         print(name, 'ramp  start', pa.round(4), 'end', pb.round(4), 'normal', n.round(3))

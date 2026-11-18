@@ -9,4 +9,8 @@
   <material name="pcb_green"> <color rgba="0.05 0.45 0.20 1.0"/></material>
   <material name="alu">       <color rgba="0.75 0.77 0.80 1.0"/></material>
   <material name="red">       <color rgba="0.8 0.1 0.1 1.0"/></material>
+  <material name="camo_dark"> <color rgba="0.12 0.20 0.10 1.0"/></material>
+  <material name="camo_tan">  <color rgba="0.45 0.40 0.28 1.0"/></material>
+  <material name="battery_blue"><color rgba="0.10 0.20 0.55 1.0"/></material>
+  <material name="rust">      <color rgba="0.45 0.22 0.10 1.0"/></material>
 </robot>

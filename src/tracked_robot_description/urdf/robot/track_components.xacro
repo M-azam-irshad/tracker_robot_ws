@@ -65,10 +65,20 @@
 
   <xacro:macro name="track_belt" params="prefix y">
     <link name="${prefix}_track_belt">
+      <!-- smooth rubber band (static) -->
       <visual>
-        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/tracks/track_belt.stl"/></geometry>
+        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/tracks/track_band.stl"/></geometry>
         <material name="rubber"/>
       </visual>
+      <!-- track frame: triangular plate that physically ties the 3 axles together, just inboard of the belt -->
+      <visual>
+        <origin xyz="0 ${-plate_y_off if y > 0 else plate_y_off} 0"/>
+        <geometry><mesh filename="package://tracked_robot_description/meshes/visual/tracks/track_frame.stl"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <!-- tread lugs: separate visuals, animated by the TrackAnimator plugin (static if the plugin is absent) -->
+      <xacro:track_lugs prefix="${prefix}"/>
+
       <collision name="front_ramp">
         <origin xyz="${ramp_cx} 0 ${ramp_cz}" rpy="0 ${ramp_pitch} 0"/>
         <geometry><box size="${ramp_len} ${track_width - 0.01} ${ramp_thickness}"/></geometry>
@@ -99,6 +109,22 @@
     <gazebo reference="${prefix}_track_belt">
       <mu1>${mu_passive}</mu1>
       <mu2>${mu_passive}</mu2>
+    </gazebo>
+    <!-- keep the belt as its own link (do not merge into base_link) so the plugin can address the lug visuals by name -->
+    <gazebo reference="${prefix}_track_belt_joint">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+    <!-- visual-only tread animation (optional package tracked_robot_gz_plugins) -->
+    <gazebo>
+      <plugin filename="TrackAnimator" name="tracked_robot::TrackAnimator">
+        <belt_link>${prefix}_track_belt</belt_link>
+        <drive_joint>${prefix}_front_roller_wheel_joint</drive_joint>
+        <lug_prefix>${prefix}_lug_</lug_prefix>
+        <lug_count>${lug_count}</lug_count>
+        <circles>${lug_circles}</circles>
+        <drive_radius>${roller_radius}</drive_radius>
+        <direction>-1</direction>
+      </plugin>
     </gazebo>
   </xacro:macro>
 

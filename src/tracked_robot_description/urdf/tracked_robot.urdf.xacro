@@ -9,6 +9,7 @@
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/robot_properties.xacro"/>
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/materials.xacro"/>
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/inertials.xacro"/>
+  <xacro:include filename="$(find tracked_robot_description)/urdf/robot/track_lugs.xacro"/>
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/track_components.xacro"/>
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/chassis.xacro"/>
   <xacro:include filename="$(find tracked_robot_description)/urdf/robot/left_track.xacro"/>

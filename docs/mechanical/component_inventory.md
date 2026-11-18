@@ -1,11 +1,11 @@
 # Component inventory (real part -> simulation)
 | Real part (STEP file) | In simulation | Source |
 |---|---|---|
-| `internal_chassis`, `side_plates`, `bigger_plate` (chassis, plates) | open camo box 52 x 26.5 x 16 cm (one solid collision box) + 2 side plates (visual) | table + STEP |
+| `internal_chassis`, `side_plates`, `bigger_plate` (chassis, plates) | open camo box 52 x 26.5 x 23 cm (one solid collision box), rim, camo patches, rear brackets, battery + 2 side plates (visual) | table + STEP |
 | `Motor` (80 mm x 169 mm) x2 | 2 visual cylinders inside the chassis; mass lumped into chassis | STEP |
 | `bigger_wheel_back`, `bigger_wheel_bearing`, `bigger_wheel_hex_nut` (drive sprocket) | `*_sprocket_wheel` link, r=9.5 cm path, 14 teeth, visual only, spins with the drive | STEP |
 | `smaller_wheel` (+bearing, nut) (front/rear rollers) | `*_front/rear_roller_wheel`, collision r=8.45 cm, POWERED (traction) | STEP + table |
-| `track__updated` (belt) | `*_track_belt`: procedural visual mesh (same profile/lugs) + ramp/skid collisions | STEP |
+| `track__updated` (belt) | `*_track_belt`: smooth band mesh + 48 separate animated lug visuals + triangular track-frame plate + ramp/skid collisions | STEP |
 | RPLIDAR / Kinect / IMU / gas / mic | unchanged sensors, repositioned on the new chassis | estimate |
 
 Bearings and hex nuts are intentionally not modelled (tiny; they only add triangles).
